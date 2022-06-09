@@ -1,0 +1,244 @@
+
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include "LedControl.h"
+int turn = 0;
+float whiteTime = 50000;
+float blackTime = 50000;
+int increment = 2000;
+unsigned long myTime;
+int lastMyTime = 0;
+int gameStart = 0;
+
+
+LedControl lc=LedControl(12,13,10,1);
+
+unsigned long delaytime=250;
+
+ 
+
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
+// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+#define COUNTDOWN_TIME  121000ul
+
+  int buttonStateWhite = 0;
+  int whiteTurn = 1;
+  int buttonStateBlack = 0;
+  int blackTurn = 0;
+
+void setup() {
+  Serial.begin(115200);
+
+  // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;); // Don't proceed, loop forever
+  }
+
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setCursor(0, 10);
+
+  pinMode(3, INPUT);
+  pinMode(4, INPUT);
+  
+  display.display();
+  delay(0); // Pause for 2 seconds
+
+  // Clear the buffer
+  display.clearDisplay();
+
+  // Show the display buffer on the screen. You MUST call display() after
+  // drawing commands to make them visible on screen!
+  display.display();
+  // display.display() is NOT necessary after every single drawing command,
+  // unless that's what you want...rather, you can batch up a bunch of
+  // drawing operations and then update the screen all at once by calling
+  // display.display(). These examples demonstrate both approaches...
+
+    /*
+   The MAX72XX is in power-saving mode on startup,
+   we have to do a wakeup call
+   */
+  for(int index=0;index<lc.getDeviceCount();index++) {
+        lc.shutdown(index,false); 
+    } 
+  /* Set the brightness to a medium values */
+  lc.setIntensity(0,10);
+  /* and clear the display */
+  lc.clearDisplay(0);
+
+
+}
+
+/* Function for displaying numbers on the 7-segment display */
+
+void outputNumber(int digit,int pos) {
+  if (digit == 1) {
+    lc.setLed(0,pos,1,false);
+    lc.setLed(0,pos,2,true);
+    lc.setLed(0,pos,3,true);
+    lc.setLed(0,pos,4,false);
+    lc.setLed(0,pos,5,false);
+    lc.setLed(0,pos,6,false);
+    lc.setLed(0,pos,7,false);
+  }
+  else if (digit == 2) {
+    lc.setLed(0,pos,1,true);
+    lc.setLed(0,pos,2,true);
+    lc.setLed(0,pos,3,false);
+    lc.setLed(0,pos,4,true);
+    lc.setLed(0,pos,5,true);
+    lc.setLed(0,pos,6,false);
+    lc.setLed(0,pos,7,true);
+  }
+  else if (digit == 3) {
+    lc.setLed(0,pos,1,true);
+    lc.setLed(0,pos,2,true);
+    lc.setLed(0,pos,3,true);
+    lc.setLed(0,pos,4,true);
+    lc.setLed(0,pos,5,false);
+    lc.setLed(0,pos,6,false);
+    lc.setLed(0,pos,7,true);
+  }
+  else if (digit == 4) {
+    lc.setLed(0,pos,1,false);
+    lc.setLed(0,pos,2,true);
+    lc.setLed(0,pos,3,true);
+    lc.setLed(0,pos,4,false);
+    lc.setLed(0,pos,5,false);
+    lc.setLed(0,pos,6,true);
+    lc.setLed(0,pos,7,true);
+  }
+  else if (digit == 5) {
+    lc.setLed(0,pos,1,true);
+    lc.setLed(0,pos,2,false);
+    lc.setLed(0,pos,3,true);
+    lc.setLed(0,pos,4,true);
+    lc.setLed(0,pos,5,false);
+    lc.setLed(0,pos,6,true);
+    lc.setLed(0,pos,7,true);   
+  }
+  else if (digit == 6) {
+    lc.setLed(0,pos,1,true);
+    lc.setLed(0,pos,2,false);
+    lc.setLed(0,pos,3,true);
+    lc.setLed(0,pos,4,true);
+    lc.setLed(0,pos,5,true);
+    lc.setLed(0,pos,6,true);
+    lc.setLed(0,pos,7,true);
+ }
+  else if (digit == 7) {
+    lc.setLed(0,pos,1,true);
+    lc.setLed(0,pos,2,true);
+    lc.setLed(0,pos,3,true);
+    lc.setLed(0,pos,4,false);
+    lc.setLed(0,pos,5,false);
+    lc.setLed(0,pos,6,false);
+    lc.setLed(0,pos,7,false);
+  }
+  else if (digit == 8) {
+    lc.setLed(0,pos,1,true);
+    lc.setLed(0,pos,2,true);
+    lc.setLed(0,pos,3,true);
+    lc.setLed(0,pos,4,true);
+    lc.setLed(0,pos,5,true);
+    lc.setLed(0,pos,6,true);
+    lc.setLed(0,pos,7,true);
+  }
+  else if (digit == 9) {
+    lc.setLed(0,pos,1,true);
+    lc.setLed(0,pos,2,true);
+    lc.setLed(0,pos,3,true);
+    lc.setLed(0,pos,4,false);
+    lc.setLed(0,pos,5,false);
+    lc.setLed(0,pos,6,true);
+    lc.setLed(0,pos,7,true);
+  }
+  else if (digit == 0) {
+    lc.setLed(0,pos,1,true);
+    lc.setLed(0,pos,2,true);
+    lc.setLed(0,pos,3,true);
+    lc.setLed(0,pos,4,true);
+    lc.setLed(0,pos,5,true);
+    lc.setLed(0,pos,6,true);
+    lc.setLed(0,pos,7,false);
+  } 
+}
+
+
+void loop() { 
+  lc.setLed(0,6,0,true);
+  lc.setLed(0,2,0,true);
+  lastMyTime = myTime;
+  myTime = millis();
+  buttonStateWhite = digitalRead(4);
+  buttonStateBlack = digitalRead(3);
+ if (buttonStateWhite == HIGH) {
+  gameStart += 1;
+ }
+ 
+ if (gameStart > 0) {
+
+
+  if (whiteTime > 0 && blackTime > 0) {
+                                                                                            
+    if (whiteTurn == 1) {
+      whiteTime -= (myTime - lastMyTime);
+
+      // FUNGERAR INTE, TILL FÖR ATT KUNNA STARTA TIMER SJÄLV UTAN ATT ÄNDRA START TID
+      if (gameStart == 1) {
+          whiteTime += (myTime - increment);
+      }
+    }
+    else {
+      blackTime -= (myTime - lastMyTime);
+    }
+  
+    if (whiteTurn == 1 && buttonStateWhite == HIGH) {
+      whiteTurn -= 1;
+      whiteTime += increment;
+    }
+  
+    if (whiteTurn == 0 && buttonStateBlack == HIGH) {
+      whiteTurn += 1;
+      blackTime += increment;
+    }
+  
+    if (buttonStateWhite == HIGH) {
+      display.setCursor(50,10);
+      display.print(buttonStateWhite);
+    }
+  
+    if (buttonStateBlack == HIGH) {
+      display.setCursor(50,30);
+      display.print(buttonStateBlack);
+    }
+  }
+
+
+
+  
+  }
+// få att fungera med float
+  
+  //outputNumber(whiteTime/10000, 7);
+  //outputNumber((whiteTime/1000 % 10), 6);
+  //outputNumber((whiteTime/100 % 10), 5);
+  //outputNumber(blackTime/10000, 3);
+  //outputNumber((blackTime/1000 % 10), 2);
+ // outputNumber((blackTime/100 % 10), 1);
+  display.setCursor(0, 10);
+  display.print(whiteTime);
+  display.setCursor(0, 30);
+  display.print(blackTime); 
+  display.display();
+  display.clearDisplay();
+}
